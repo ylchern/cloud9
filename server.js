@@ -1,6 +1,16 @@
 #!/usr/bin/env node
 
 var path = require('path');
+var fs = require('fs');
+// support both node 0.6 and 0.8
+["exists", "existsSync"].forEach(function(x){
+    if (path[x] && !fs[x])
+        fs[x] = path[x];
+    else if (fs[x] && !path[x])
+        path[x] = fs[x];
+});
+
+
 var architect = require("architect");
 var spawn = require("child_process").spawn;
 
@@ -22,9 +32,9 @@ for (var p = 2; p < process.argv.length; p++) {
    if (process.argv[p] === "-d") {
        debug = true;
        
-       if(!path.existsSync("plugins-client/lib.apf/www/apf-packaged/apf_debug.js")) {
-       		console.log("Building apfdebug for first run...");
-       		
+       if(!fs.existsSync("plugins-client/lib.apf/www/apf-packaged/apf_debug.js")) {
+            console.log("Building apfdebug for first run...");
+            
             var buildDebug = spawn("npm", ["run-script", "build-debug"]);
 
             buildDebug.stderr.setEncoding("utf8");
@@ -52,12 +62,12 @@ for (var p = 2; p < process.argv.length; p++) {
 
        configName = "packed";
 
-       if(!path.existsSync("plugins-client/lib.packed/www/" + packedName) && !path.existsSync("plugins-client/lib.packed/www/" + packedName + ".gz")) {
-       		console.log("Building packed file for first run...Please wait...");
-		   	  console.log("   |\\      _,,,---,,_\n"+
-		   				"   /,`.-'`'    -.  ;-;;,_\n" +
-		  				"   |,4-  ) )-,_..;\\ (  `'-'\n" +
-		 				"   '---''(_/--'  `-'\\_)  Felix Lee");
+       if(!fs.existsSync("plugins-client/lib.packed/www/" + packedName) && !fs.existsSync("plugins-client/lib.packed/www/" + packedName + ".gz")) {
+            console.log("Building packed file for first run...Please wait...");
+              console.log("   |\\      _,,,---,,_\n"+
+                        "   /,`.-'`'    -.  ;-;;,_\n" +
+                        "   |,4-  ) )-,_..;\\ (  `'-'\n" +
+                        "   '---''(_/--'  `-'\\_)  Felix Lee");
 
             var buildPackage = spawn("npm", ["run-script", "build-packed"]);
             
@@ -79,26 +89,26 @@ for (var p = 2; p < process.argv.length; p++) {
 }
 
 if (debug == false && packed == false)
-	boot();
+    boot();
 
 function boot() {
-	var configPath = path.resolve(__dirname, "./configs/", configName);
-	var plugins = require(configPath);
+    var configPath = path.resolve(__dirname, "./configs/", configName);
+    var plugins = require(configPath);
 
-	// server plugins
-	plugins.forEach(function(plugin) {
-	   if (plugin.packagePath && /\.\/cloud9.core$/.test(plugin.packagePath)) {
-	       plugin.debug = debug;
-	       plugin.packed = packed;
-	       plugin.packedName = packedName;
-	   }
-	});
+    // server plugins
+    plugins.forEach(function(plugin) {
+        if (plugin.packagePath && /\.\/cloud9.core$/.test(plugin.packagePath)) {
+            plugin.debug = debug;
+            plugin.packed = packed;
+            plugin.packedName = packedName;
+        }
+    });
 
   architect.createApp(architect.resolveConfig(plugins, __dirname + "/plugins-server"), function (err, app) {
-	   if (err) {
-	       console.error("While starting the '%s':", configPath);
-	       throw err;
-	   }
-	   console.log("Started '%s'!", configPath);
-	});
+        if (err) {
+            console.error("While starting the '%s':", configPath);
+            throw err;
+        }
+        console.log("Started '%s'!", configPath);
+    });
 }
