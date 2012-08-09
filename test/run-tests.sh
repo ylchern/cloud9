@@ -1,5 +1,5 @@
 #!/bin/bash -e
-     
+    
 npm install amd-loader
 BLACKLIST=`cat test/blacklist.txt`
 for F in `find . -name '*_test.js' | grep -v backup- | grep -v node_modules`; do
